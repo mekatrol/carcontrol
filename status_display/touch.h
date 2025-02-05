@@ -17,6 +17,7 @@ public:
 
   const int getX();
   const int getY();
+  const bool getState();
   const bool getStateChanged();
 
 private:

@@ -23,6 +23,10 @@ const int Touch::getY() {
   return this->touch_state.y;
 }
 
+const bool Touch::getState() {
+  return this->touch_state.debounced_state;
+}
+
 const bool Touch::getStateChanged() {
   return this->touch_state.state_changed;
 }
@@ -60,4 +64,6 @@ void Touch::debounce(long now_millis) {
     this->touch_state.x = touched ? touch.data.x : -1;
     this->touch_state.y = touched ? touch.data.y : -1;
   }
+
+  Serial.println("");
 }
