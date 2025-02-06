@@ -53,8 +53,8 @@ void setup() {
   sprintf(voltage_text_buffer_prev, "%0.2fV", 0);
   sprintf(current_text_buffer, "%0.2fA", 0);
   sprintf(current_text_buffer_prev, "%0.2fA", 0);
-  sprintf(soc_text_buffer, "%d%%", 0);
-  sprintf(soc_text_buffer_prev, "%d%%", 0);
+  sprintf(soc_text_buffer, "%0.1f%%", 0);
+  sprintf(soc_text_buffer_prev, "%0.1f%%", 0);
 }
 
 bool redraw = true;
@@ -85,7 +85,7 @@ void loop() {
 
     sprintf(voltage_text_buffer, "%0.2fV", stateData.voltage);
     sprintf(current_text_buffer, "%0.2fA", stateData.current);
-    sprintf(soc_text_buffer, "%d%%", stateData.stateOfCharge);
+    sprintf(soc_text_buffer, "%0.1f%%", stateData.stateOfCharge);
 
     tft.setTextColor(TFT_BLACK);
     tft.drawString(voltage_text_buffer_prev, 120, 160);

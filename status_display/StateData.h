@@ -4,7 +4,7 @@
 struct StateDataStruct {
   float voltage;
   float current;
-  int stateOfCharge;
+  float stateOfCharge;
 };
 
 #endif

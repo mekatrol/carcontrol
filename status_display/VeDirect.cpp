@@ -54,7 +54,7 @@ bool VeDirect::ProcessCommand(StateDataStruct *stateData) {
   }
 
   if (strcmp(commandCode, "SOC") == 0) {
-    stateData->stateOfCharge = (int)(atof(commandValue) / 10.0f);
+    stateData->stateOfCharge = atof(commandValue) / 10.0f;
     return true;
   }
 
