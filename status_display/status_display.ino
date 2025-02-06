@@ -6,6 +6,7 @@
 #include "VeDirect.h"
 #include "CircularBuffer.h"
 #include "StateData.h"
+#include "TextString.h"
 
 static const uint16_t screenWidth = 240;
 static const uint16_t screenHeight = 240;
@@ -26,18 +27,13 @@ CircularBuffer rxBuffer = CircularBuffer();
 
 StateDataStruct stateData;
 
-char voltage_text_buffer[TEXT_BUFFER_SIZE + 1];
-char voltage_text_buffer_prev[TEXT_BUFFER_SIZE + 1];
-
-char current_text_buffer[TEXT_BUFFER_SIZE + 1];
-char current_text_buffer_prev[TEXT_BUFFER_SIZE + 1];
-
-char soc_text_buffer[TEXT_BUFFER_SIZE + 1];
-char soc_text_buffer_prev[TEXT_BUFFER_SIZE + 1];
+TextString soc = TextString(120, 45, 3, "%0.1f%%");
+TextString amps = TextString(120, 100, 4, "%0.2fA");
+TextString volts = TextString(120, 165, 4, "%0.2fV");
 
 void setup() {
   // For debugging
-  Serial.begin(115200);
+  // Serial.begin(115200);
 
   memset(&stateData, 0, sizeof(StateDataStruct));
 
@@ -47,13 +43,6 @@ void setup() {
   tft.setTextDatum(MC_DATUM);
 
   touch.start();
-
-  sprintf(voltage_text_buffer, "%0.2fV", 0);
-  sprintf(voltage_text_buffer_prev, "%0.2fV", 0);
-  sprintf(current_text_buffer, "%0.2fA", 0);
-  sprintf(current_text_buffer_prev, "%0.2fA", 0);
-  sprintf(soc_text_buffer, "%0.1f%%", 0);
-  sprintf(soc_text_buffer_prev, "%0.1f%%", 0);
 }
 
 bool redraw = true;
@@ -82,30 +71,9 @@ void loop() {
   if (redraw || dataUpdated) {
     redraw = false;
 
-    sprintf(voltage_text_buffer, "%0.2fV", stateData.voltage);
-    sprintf(current_text_buffer, "%0.2fA", stateData.current);
-    sprintf(soc_text_buffer, "%0.1f%%", stateData.stateOfCharge);
-
-    tft.setTextSize(4);
-
-    tft.setTextColor(TFT_BLACK);
-    tft.drawString(voltage_text_buffer_prev, 120, 160);
-    tft.drawString(current_text_buffer_prev, 120, 100);
-
-    tft.setTextSize(3);
-    tft.drawString(soc_text_buffer_prev, 120, 45);
-
-    tft.setTextSize(4);
-    tft.setTextColor(TFT_WHITE);
-    tft.drawString(voltage_text_buffer, 120, 160);
-    tft.drawString(current_text_buffer, 120, 100);
-
-    tft.setTextSize(3);
-    tft.drawString(soc_text_buffer, 120, 45);
-
-    memcpy(voltage_text_buffer_prev, voltage_text_buffer, sizeof(voltage_text_buffer));
-    memcpy(current_text_buffer_prev, current_text_buffer, sizeof(current_text_buffer));
-    memcpy(soc_text_buffer_prev, soc_text_buffer, sizeof(soc_text_buffer));
+    volts.Render(&tft, stateData.voltage, TFT_WHITE, TFT_BLACK);
+    amps.Render(&tft, stateData.current, TFT_WHITE, TFT_BLACK);
+    soc.Render(&tft, stateData.stateOfCharge, TFT_WHITE, TFT_BLACK);
 
     uint32_t color = TFT_BLACK;
 
@@ -120,5 +88,5 @@ void loop() {
     capacityStatus.render(&tft, stateData.stateOfCharge, color, TFT_BLACK, TFT_DARKGREY);
   }
 
-  delay(10);
+  delay(5);
 }
