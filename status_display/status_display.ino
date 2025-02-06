@@ -2,6 +2,7 @@
 #include <TFT_eSPI.h>
 
 #include "touch.h"
+#include "arc.h"
 
 static const uint16_t screenWidth = 240;
 static const uint16_t screenHeight = 240;
@@ -9,6 +10,8 @@ static const uint16_t screenHeight = 240;
 TFT_eSPI tft = TFT_eSPI(screenWidth, screenHeight);
 
 Touch touch(/* sda */ 6, /* scl */ 7, /* rst */ 13, /* irq*/ 5);
+
+Arc capacityStatus(118, 108, 30, 330, 0, 100, 120, 120, CW);
 
 int pct = 0;
 char text_buffer[10];
@@ -30,6 +33,7 @@ void setup() {
 }
 
 bool redraw = true;
+int dir = 1;
 
 void loop() {
   // Get current millis
@@ -50,6 +54,18 @@ void loop() {
     redraw = true;
   }
 
+  pct += (1 * dir);
+
+  if (pct > 100) {
+    pct = 100;
+    dir *= -1;
+  } else if (pct < 0) {
+    pct = 0;
+    dir *= -1;
+  }
+  sprintf(text_buffer, "%3d%%", pct);
+  redraw = true;
+
   if (redraw) {
     redraw = false;
 
@@ -61,18 +77,17 @@ void loop() {
 
     memcpy(old_text_buffer, text_buffer, sizeof(text_buffer));
 
-    int deg = pct * 3;
+    uint32_t color = TFT_BLACK;
 
-    int degStart = 30;
-    int degEnd = degStart + deg;
-
-    if (degStart != degEnd) {
-      tft.drawSmoothArc(120, 120, 110, 120, degStart, degEnd, TFT_GREENYELLOW, TFT_GREENYELLOW, true);
+    if (pct >= 60) {
+      color = TFT_GREENYELLOW;
+    } else if (pct >= 30) {
+      color = TFT_ORANGE;
+    } else {
+      color = TFT_RED;
     }
-    tft.drawSmoothArc(120, 120, 110, 120, degEnd, degStart, TFT_BLACK, TFT_BLACK, true);
 
-    tft.drawSmoothArc(120, 120, 110, 120, degStart - 1, degStart + 1, TFT_MAGENTA, TFT_MAGENTA, true);
-    tft.drawSmoothArc(120, 120, 110, 120, 329, 331, TFT_MAGENTA, TFT_MAGENTA, true);
+    capacityStatus.render(&tft, pct, color, TFT_BLACK, TFT_DARKGREY);
   }
 
   delay(10);

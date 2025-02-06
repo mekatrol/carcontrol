@@ -64,6 +64,4 @@ void Touch::debounce(long now_millis) {
     this->touch_state.x = touched ? touch.data.x : -1;
     this->touch_state.y = touched ? touch.data.y : -1;
   }
-
-  Serial.println("");
 }
