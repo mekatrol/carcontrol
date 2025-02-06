@@ -16,9 +16,8 @@ class VeDirect {
     void ResetCommand();
     bool ProcessCommand(StateDataStruct *stateData);
 
-    char command[COMMAND_BUFFER_SIZE + 1];
+    char commandLine[COMMAND_BUFFER_SIZE + 1];
     uint16_t commandIndex;
-    bool commandStarted;
 };
 
 #endif

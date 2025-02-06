@@ -44,7 +44,6 @@ void setup() {
   tft.begin();
   tft.setRotation(0);
   tft.fillScreen(TFT_BLACK);
-  tft.setTextSize(4);
   tft.setTextDatum(MC_DATUM);
 
   touch.start();
@@ -87,15 +86,22 @@ void loop() {
     sprintf(current_text_buffer, "%0.2fA", stateData.current);
     sprintf(soc_text_buffer, "%0.1f%%", stateData.stateOfCharge);
 
+    tft.setTextSize(4);
+
     tft.setTextColor(TFT_BLACK);
     tft.drawString(voltage_text_buffer_prev, 120, 160);
     tft.drawString(current_text_buffer_prev, 120, 100);
-    tft.drawString(soc_text_buffer_prev, 120, 40);
 
+    tft.setTextSize(3);
+    tft.drawString(soc_text_buffer_prev, 120, 45);
+
+    tft.setTextSize(4);
     tft.setTextColor(TFT_WHITE);
     tft.drawString(voltage_text_buffer, 120, 160);
     tft.drawString(current_text_buffer, 120, 100);
-    tft.drawString(soc_text_buffer, 120, 40);
+
+    tft.setTextSize(3);
+    tft.drawString(soc_text_buffer, 120, 45);
 
     memcpy(voltage_text_buffer_prev, voltage_text_buffer, sizeof(voltage_text_buffer));
     memcpy(current_text_buffer_prev, current_text_buffer, sizeof(current_text_buffer));
