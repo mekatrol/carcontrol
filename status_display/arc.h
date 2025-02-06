@@ -1,6 +1,10 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 
+#ifndef __ARC_H__
+#define __ARC_H__
+
+
 enum DIRECTION {
   CW = 0x01,
   CCW = 0x02
@@ -26,3 +30,5 @@ private:
 
   int32_t valueToDegree(int32_t value);
 };
+
+#endif

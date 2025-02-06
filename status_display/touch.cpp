@@ -1,5 +1,5 @@
 #include "CST816S.h"
-#include "touch.h"
+#include "Touch.h"
 
 const unsigned long debounce_period = 50;
 const CST816S touch(6, 7, 13, 5);  // sda, scl, rst, irq

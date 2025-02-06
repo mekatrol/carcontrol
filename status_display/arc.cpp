@@ -1,4 +1,4 @@
-#include "arc.h"
+#include "Arc.h"
 
 Arc::Arc(int32_t outerRadius, int32_t innerRadius, int32_t startAngle, int32_t endAngle, int32_t startValue, int32_t endValue, int32_t centerX, int32_t centerY, enum DIRECTION direction)
   : outerRadius(outerRadius),

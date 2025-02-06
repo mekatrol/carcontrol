@@ -1,24 +1,45 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 
-#include "touch.h"
-#include "arc.h"
+#include "Touch.h"
+#include "Arc.h"
+#include "VeDirect.h"
+#include "CircularBuffer.h"
+#include "StateData.h"
 
 static const uint16_t screenWidth = 240;
 static const uint16_t screenHeight = 240;
 
+#define RXD1 18
+#define TXD1 17
+#define TEXT_BUFFER_SIZE 10
+
 TFT_eSPI tft = TFT_eSPI(screenWidth, screenHeight);
 
-Touch touch(/* sda */ 6, /* scl */ 7, /* rst */ 13, /* irq*/ 5);
+Touch touch = Touch(/* sda */ 6, /* scl */ 7, /* rst */ 13, /* irq*/ 5);
 
-Arc capacityStatus(118, 108, 30, 330, 0, 100, 120, 120, CW);
+Arc capacityStatus = Arc(118, 108, 30, 330, 0, 100, 120, 120, CW);
 
-int pct = 0;
-char text_buffer[10];
-char old_text_buffer[10];
+VeDirect shunt(RXD1, TXD1, 19200);
+
+CircularBuffer rxBuffer = CircularBuffer();
+
+StateDataStruct stateData;
+
+char voltage_text_buffer[TEXT_BUFFER_SIZE + 1];
+char voltage_text_buffer_prev[TEXT_BUFFER_SIZE + 1];
+
+char current_text_buffer[TEXT_BUFFER_SIZE + 1];
+char current_text_buffer_prev[TEXT_BUFFER_SIZE + 1];
+
+char soc_text_buffer[TEXT_BUFFER_SIZE + 1];
+char soc_text_buffer_prev[TEXT_BUFFER_SIZE + 1];
 
 void setup() {
+  // For debugging
   Serial.begin(115200);
+
+  memset(&stateData, 0, sizeof(StateDataStruct));
 
   tft.begin();
   tft.setRotation(0);
@@ -28,66 +49,69 @@ void setup() {
 
   touch.start();
 
-  sprintf(text_buffer, "%3d%%", 0);
-  sprintf(old_text_buffer, "%3d%%", 0);
+  sprintf(voltage_text_buffer, "%0.2fV", 0);
+  sprintf(voltage_text_buffer_prev, "%0.2fV", 0);
+  sprintf(current_text_buffer, "%0.2fA", 0);
+  sprintf(current_text_buffer_prev, "%0.2fA", 0);
+  sprintf(soc_text_buffer, "%d%%", 0);
+  sprintf(soc_text_buffer_prev, "%d%%", 0);
 }
 
 bool redraw = true;
-int dir = 1;
 
 void loop() {
+  while (Serial1.available()) {
+    // Read a character
+    char ch = Serial1.read();
+    rxBuffer.AddChar(ch);
+  }
+
+  // Redraw if data was updated
+  bool dataUpdated = shunt.ProcessMessageBuffer(&rxBuffer, &stateData);
+
   // Get current millis
   long now_millis = millis();
 
   // Debounce any touch changes
   touch.debounce(now_millis);
 
-  // Only toggle if is a 'new' touch
+  // Only redraw if is a 'new' touch
   if (touch.getStateChanged() && touch.getState()) {
-    pct += 10;
-
-    if (pct > 100) {
-      pct = 0;
-    }
-
-    sprintf(text_buffer, "%3d%%", pct);
     redraw = true;
   }
 
-  pct += (1 * dir);
-
-  if (pct > 100) {
-    pct = 100;
-    dir *= -1;
-  } else if (pct < 0) {
-    pct = 0;
-    dir *= -1;
-  }
-  sprintf(text_buffer, "%3d%%", pct);
-  redraw = true;
-
-  if (redraw) {
+  if (redraw || dataUpdated) {
     redraw = false;
 
+    sprintf(voltage_text_buffer, "%0.2fV", stateData.voltage);
+    sprintf(current_text_buffer, "%0.2fA", stateData.current);
+    sprintf(soc_text_buffer, "%d%%", stateData.stateOfCharge);
+
     tft.setTextColor(TFT_BLACK);
-    tft.drawString(old_text_buffer, 120, 120);
+    tft.drawString(voltage_text_buffer_prev, 120, 160);
+    tft.drawString(current_text_buffer_prev, 120, 100);
+    tft.drawString(soc_text_buffer_prev, 120, 40);
 
     tft.setTextColor(TFT_WHITE);
-    tft.drawString(text_buffer, 120, 120);
+    tft.drawString(voltage_text_buffer, 120, 160);
+    tft.drawString(current_text_buffer, 120, 100);
+    tft.drawString(soc_text_buffer, 120, 40);
 
-    memcpy(old_text_buffer, text_buffer, sizeof(text_buffer));
+    memcpy(voltage_text_buffer_prev, voltage_text_buffer, sizeof(voltage_text_buffer));
+    memcpy(current_text_buffer_prev, current_text_buffer, sizeof(current_text_buffer));
+    memcpy(soc_text_buffer_prev, soc_text_buffer, sizeof(soc_text_buffer));
 
     uint32_t color = TFT_BLACK;
 
-    if (pct >= 60) {
+    if (stateData.stateOfCharge >= 60) {
       color = TFT_GREENYELLOW;
-    } else if (pct >= 30) {
+    } else if (stateData.stateOfCharge >= 30) {
       color = TFT_ORANGE;
     } else {
       color = TFT_RED;
     }
 
-    capacityStatus.render(&tft, pct, color, TFT_BLACK, TFT_DARKGREY);
+    capacityStatus.render(&tft, stateData.stateOfCharge, color, TFT_BLACK, TFT_DARKGREY);
   }
 
   delay(10);
